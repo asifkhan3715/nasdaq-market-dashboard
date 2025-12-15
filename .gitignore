@@ -1,0 +1,37 @@
+--- Virtual Environments (NEVER UPLOAD THESE) ---
+
+venv/
+env/
+.env
+
+--- Python Cache (Junk files) ---
+
+pycache/
+*.py[cod]
+*$py.class
+
+--- Jupyter Notebook Checkpoints ---
+
+.ipynb_checkpoints/
+
+--- IDE Settings (VS Code/PyCharm) ---
+
+.vscode/
+.idea/
+
+--- OS Junk Files ---
+
+.DS_Store
+Thumbs.db
+
+--- Optional: Large Data Files (>100MB) ---
+
+Uncomment below if your data/models are too big for GitHub
+
+*.csv
+
+*.pkl
+
+*.h5
+
+*.keras
