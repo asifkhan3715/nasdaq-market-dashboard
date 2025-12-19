@@ -295,16 +295,72 @@ if 'data' in st.session_state:
                     fig_cm.update_layout(paper_bgcolor=background_color, font={'color':text_color})
                     st.plotly_chart(fig_cm, use_container_width=True)
 
-                # --- PLOT 2: Last 50 Days Comparison ---
+               # --- PLOT 2: Market Signal Overlay (Replaces Bar Chart) ---
                 with c2:
-                    st.subheader("Recent Predictions (Last 50 Days)")
-                    res_tail = pd.DataFrame({'Actual': y_test, 'Predicted': preds}, index=test_data.index).tail(50)
-                    res_tail['Result'] = np.where(res_tail['Actual'] == res_tail['Predicted'], 'Correct', 'Incorrect')
+                    st.subheader("Model Signal Map (Last 60 Days)")
                     
-                    fig_bar = px.bar(res_tail, x=res_tail.index, y=['Actual', 'Predicted'], barmode='group',
-                                     color_discrete_map={'Actual': '#888888', 'Predicted': primary_color})
-                    fig_bar.update_layout(plot_bgcolor=background_color, paper_bgcolor=background_color, font_color=text_color)
-                    st.plotly_chart(fig_bar, use_container_width=True)
+                    # Prepare data for the last 60 days
+                    lookback = 60
+                    recent_test = test_data.tail(lookback).copy()
+                    recent_preds = preds[-lookback:]
+                    recent_actual = y_test.values[-lookback:]
+                    
+                    recent_test['Pred'] = recent_preds
+                    recent_test['Actual'] = recent_actual
+                    
+                    # Define Signal Logic
+                    # 1 = Up, 0 = Down
+                    conditions = [
+                        (recent_test['Pred'] == 1) & (recent_test['Actual'] == 1), # Correct Up
+                        (recent_test['Pred'] == 0) & (recent_test['Actual'] == 0), # Correct Down
+                        (recent_test['Pred'] != recent_test['Actual'])             # Mismatch
+                    ]
+                    choices = ['Correct Up-Trend', 'Correct Down-Trend', 'False Signal']
+                    recent_test['Signal'] = np.select(conditions, choices, default='Neutral')
+
+                    # Create Figure
+                    fig_signal = go.Figure()
+
+                    # 1. The Price Line
+                    fig_signal.add_trace(go.Scatter(
+                        x=recent_test.index, y=recent_test['Close'],
+                        mode='lines',
+                        line=dict(color='#4B5563', width=1),
+                        name='Price',
+                        showlegend=False
+                    ))
+
+                    # 2. Add Markers for Signals
+                    colors = {'Correct Up-Trend': '#00CC96', 'Correct Down-Trend': '#EF553B', 'False Signal': '#8B949E'}
+                    symbols = {'Correct Up-Trend': 'triangle-up', 'Correct Down-Trend': 'triangle-down', 'False Signal': 'x'}
+
+                    for s_type in choices:
+                        mask = recent_test['Signal'] == s_type
+                        fig_signal.add_trace(go.Scatter(
+                            x=recent_test.index[mask],
+                            y=recent_test['Close'][mask],
+                            mode='markers',
+                            name=s_type,
+                            marker=dict(
+                                color=colors[s_type],
+                                size=10,
+                                symbol=symbols[s_type],
+                                line=dict(width=1, color='white')
+                            )
+                        ))
+
+                    fig_signal.update_layout(
+                        plot_bgcolor=background_color,
+                        paper_bgcolor=background_color,
+                        font_color=text_color,
+                        margin=dict(l=0, r=0, t=30, b=0),
+                        height=400,
+                        legend=dict(orientation="h", y=1.05, x=0.5, xanchor="center"),
+                        xaxis=dict(showgrid=False),
+                        yaxis=dict(gridcolor='#30363D', title="Price")
+                    )
+                    
+                    st.plotly_chart(fig_signal, use_container_width=True)
 
                 # --- DETAIL: Classification Report ---
                 with st.expander("📄 View Detailed Classification Report"):
