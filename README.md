@@ -148,7 +148,7 @@ The dashboard will automatically launch in your default web browser at `http://l
 This application is actively deployed on **Streamlit Community Cloud**.
 
 - **App Hibernation:** If the application receives no traffic for a few consecutive days, it will automatically enter hibernation mode. Visiting the link will wake it up, though the initial spin-up may take 1–2 minutes.
-- **Resource Limits:** Streamlit Cloud provides roughly 1 GB of RAM. To prevent memory exhaustion when running deep learning models (LSTMs), the application loads model artifacts dynamically into memory only upon user execution, rather than globally at startup.
+
 
 ---
 
